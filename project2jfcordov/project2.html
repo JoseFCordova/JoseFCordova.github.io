@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokemon Scatterplot</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: black;
+            shape-rendering: crispEdges;
+        }
+        .axis text {
+            font-family: sans-serif;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+  <div id="tooltip" style="position: absolute; opacity: 0; width: 120px; height: 50px;">
+    <img id="pokemon-icon" src="" alt="" style="display: none; width: 40px; height: 40px; float: left;">
+</div>
+    <div>
+        <label for="yAttribute">Y-Axis Attribute:</label>
+        <select id="yAttribute">
+            <option value="attack">Attack</option>
+            <option value="defense">Defense</option>
+            <option value="sp_attack">Sp. Attack</option>
+            <option value="sp_defense">Sp. Defense</option>
+            <option value="speed">Speed</option>
+        </select>
+    </div>
+    <div>
+        <label for="generation">Generation:</label>
+        <select id="generation">
+            <option value="all">All</option>
+            <option value="1">1</option>
+            <option value="2">2</option>  
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <!-- Add options for each generation, e.g., <option value="1">1</option> -->
+        </select>
+    </div>
+    <div>
+        <label for="type">Type:</label>
+        <select id="type">
+            <option value="all">All</option>
+            <option value="grass">Grass</option>
+            <option value="fire">Fire</option>
+            <option value="water">Water</option>
+            <option value="bug">Bug</option>
+            <option value="normal">Normal</option>
+            <option value="poison">Poison</option>
+            <option value="electric">Electric</option>
+            <option value="ground">Ground</option>
+            <option value="fairy">Fairy</option>
+            <option value="fighting">Fighting</option>
+            <option value="psychic">Psychic</option>
+            <option value="rock">Rock</option>
+            <option value="ghost">Ghost</option>
+            <option value="ice">Ice</option>
+            <option value="dragon">Dragon</option>
+            <option value="dark">Dark</option>
+            <option value="steel">Steel</option>
+            <!-- Add options for each type, e.g., <option value="Grass">Grass</option> -->
+        </select>
+    </div>
+    <svg id="scatterplot" width="600" height="400"></svg>
+    <script>
+        const margin = {top: 20, right: 20, bottom: 30, left: 40},
+            width = 600 - margin.left - margin.right,
+            height = 400 - margin.top - margin.bottom;
+
+        const x = d3.scaleLinear().range([0, width]);
+        const y = d3.scaleLinear().range([height, 0]);
+
+        const xAxis = d3.axisBottom(x);
+        const yAxis = d3.axisLeft(y);
+
+        const svg = d3.select("#scatterplot")
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        d3.csv("pokemon.csv").then(data => {
+            data.forEach(d => {
+                d.attack = +d.attack;
+                d.defense = +d.defense;
+                d.sp_attack = +d.sp_attack;
+                d.sp_defense = +d.sp_defense;
+                d.speed = +d.speed;
+            });
+
+            x.domain(d3.extent(data, d => d.id));
+            y.domain(d3.extent(data, d => d.attack));
+
+            svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + height + ")")
+                .call(xAxis);
+
+            svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis);
+            const tooltip = d3.select("#tooltip");
+
+            const updateScatterplot = () => {
+            const yAttribute = document.getElementById("yAttribute").value;
+            const generationFilter = document.getElementById("generation").value;
+            const typeFilter = document.getElementById("type").value;
+            
+
+            const filteredData = data.filter(d => {
+                const generationMatch = generationFilter === "all" || d.generation === generationFilter;
+                const typeMatch = typeFilter === "all" || d.type1 === typeFilter || d.type2 === typeFilter;
+                return generationMatch && typeMatch;
+            });
+
+            y.domain(d3.extent(filteredData, d => d[yAttribute]));
+
+            svg.selectAll(".dot")
+                .data(filteredData, d => d.id)
+                .join(
+                    enter => enter.append("circle")
+                        .attr("class", "dot")
+                        .attr("r", 1.5)
+                        .attr("cx", d => x(d.id))
+                        .attr("cy", d => y(d[yAttribute])),
+                    update => update
+                        .attr("cy", d => y(d[yAttribute])),
+                    exit => exit.remove()
+                );
+
+            svg.select(".y.axis")
+                .transition()
+                .duration(500)
+                .call(yAxis);
+          svg.selectAll(".dot")
+        .data(filteredData, d => d.id)
+        .join(
+            enter => enter.append("circle")
+                .attr("class", "dot")
+                .attr("r", 3.5)
+                .attr("cx", d => x(d.id))
+                .attr("cy", d => y(d[yAttribute]))
+                .on("mouseover", (event, d) => {
+                    tooltip.transition()
+                        .duration(200)
+                        .style("opacity", 0.9);
+                        tooltip.html(`<div><img src="icons/${d.pokedex_number}.png" alt="${d.name}" style="width: 100px; height: 100px; float: left;"> ${d.name}</div>`)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 10) + "px");
+                    
+    // Set the image source for the Pokémon icon
+    const iconPath = `icons/${d.pokedex_number}.png`;
+    const iconElement = document.getElementById("pokemon-icon");
+    iconElement.src = iconPath;
+    iconElement.style.display = "block";
+
+    tooltip.html(`<div>${d.name}</div>`)
+        .style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY - 10) + "px");
+                })
+                .on("mouseout", () => {
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                        const iconElement = document.getElementById("pokemon-icon");
+                        iconElement.style.display = "none";
+                }),
+            update => update
+                .attr("cy", d => y(d[yAttribute])),
+            exit => exit.remove()
+        );
+
+        };
+
+        updateScatterplot();
+
+        document.getElementById("yAttribute").addEventListener("change", updateScatterplot);
+        document.getElementById("generation").addEventListener("change", updateScatterplot);
+        document.getElementById("type").addEventListener("change", updateScatterplot);
+    }).catch(error => {
+        console.error("Error loading CSV:", error);
+    });
+</script>
+</body>
+</html>
