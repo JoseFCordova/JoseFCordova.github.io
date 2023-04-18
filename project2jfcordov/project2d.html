@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Info</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        .axis line,
+        .axis path {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pokémon Info</h1>
+    <label for="pokemon-select">Choose a Pokémon:</label>
+    <select id="pokemon-select">
+        <option value="">--Select--</option>
+    </select>
+    <div id="pokemon-info"></div>
+    <script>
+        d3.csv("pokemon.csv").then(data => {
+            const select = d3.select("#pokemon-select");
+            select.selectAll("option")
+                .data(data)
+                .enter()
+                .append("option")
+                .attr("value", d => d.name)
+                .text(d => d.name);
+            select.on("change", function() {
+                const selected = this.value;
+                const pokemon = data.find(p => p.name === selected);
+                if (pokemon) {
+                    displayPokemonInfo(pokemon);
+                }
+            });
+        });
+
+        function displayPokemonInfo(pokemon) {
+            const info = d3.select("#pokemon-info");
+            info.html("");
+
+            const stats = [
+                { key: "Attack", value: +pokemon.attack },
+                { key: "Defense", value: +pokemon.defense },
+                { key: "Sp. Attack", value: +pokemon.sp_attack },
+                { key: "Sp. Defense", value: +pokemon.sp_defense },
+                { key: "Speed", value: +pokemon.speed },
+            ];
+
+            const width = 800;
+            const height = 800;
+            const radius = Math.min(width, height) / 2;
+            const angleSlice = (2 * Math.PI) / stats.length;
+
+            const svg = info.append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .attr("position", "relative");
+
+            const g = svg.append("g")
+                .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+            const maxValue = Math.max(...stats.map(s => s.value));
+
+            const scale = d3.scaleLinear()
+                .domain([0, maxValue])
+                .range([0, radius]);
+
+            const axisGrid = g.selectAll(".axisGrid")
+                .data(stats)
+                .enter()
+                .append("g")
+                .attr("class", "axisGrid");
+
+            axisGrid.append("line")
+                .attr("x1", 0)
+                .attr("y1", 0)
+                .attr("x2", (d, i) => scale(maxValue) * Math.cos(angleSlice * i - Math.PI / 2))
+                .attr("y2", (d, i) => scale(maxValue) * Math.sin(angleSlice * i - Math.PI / 2))
+                .attr("class", "axis");
+
+const statAngles = [
+    { key: "Attack", angle: 1 * Math.PI / 10 },
+    { key: "Defense", angle: 3 * Math.PI / 10 },
+    { key: "Sp. Attack", angle: 5 * Math.PI / 10 },
+    { key: "Sp. Defense", angle: 7 * Math.PI / 10 },
+    { key: "Speed", angle: 9 * Math.PI / 10 },
+];
+
+axisGrid.append("text")
+    .attr("x", (d, i) => (scale(maxValue) + 20) * Math.cos(angleSlice * i - Math.PI / 2))
+    .attr("y", (d, i) => (scale(maxValue) + 20) * Math.sin(angleSlice * i - Math.PI / 2))
+    .attr("text-anchor", (d, i) => {
+        const angle = angleSlice * i;
+
+        if (angle >= 0 && angle < Math.PI) {
+            return "start";
+        } else {
+            return "end";
+        }
+    })
+    .attr("dominant-baseline", "central")
+    .text(d => d.key);
+
+
+
+
+            const radarLine = d3.lineRadial()
+                .radius(d => scale(d.value))
+                .angle((d, i) => angleSlice * i - Math.PI / 2);
+
+            g.append("path")
+                .datum(stats)
+                .attr("d", radarLine)
+                .attr("fill", "rgba(0, 100, 255, 0.3)")
+                .attr("stroke", "rgba(0, 100, 255, 0.7)")
+                .attr("stroke-width", "2px");
+
+            const paddedPokedexNumber = String(pokemon.pokedex_number).padStart(2, '0');
+            const imgPath = `./icons/${paddedPokedexNumber}.png`;
+
+            svg.append("image")
+                .attr("xlink:href", imgPath)
+                .attr("width", 100)
+                .attr("height", 100)
+                .attr("x", (width - 100) / 2)
+                .attr("y", (height - 100) / 2);
+        }
+    </script>
+</body>
+</html>
+
+

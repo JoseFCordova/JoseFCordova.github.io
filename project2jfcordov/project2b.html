@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pokemon stats database</title>
+    <title>Pokemon Breeding Database</title>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <style>
         .axis path,
@@ -25,11 +25,11 @@
     <div>
         <label for="yAttribute">Y-Axis Attribute:</label>
         <select id="yAttribute">
-            <option value="attack">Attack</option>
-            <option value="defense">Defense</option>
-            <option value="sp_attack">Sp. Attack</option>
-            <option value="sp_defense">Sp. Defense</option>
-            <option value="speed">Speed</option>
+            <option value="base_egg_steps">Base Egg Steps</option>
+            <option value="base_happiness">Base Happiness</option>
+            <option value="base_total">Base Total</option>
+            <option value="percentage_male">% Male</option>
+            <option value="experience_growth">Experience Growth</option>
         </select>
     </div>
     <div>
@@ -88,15 +88,15 @@
 
         d3.csv("pokemon.csv").then(data => {
             data.forEach(d => {
-                d.attack = +d.attack;
-                d.defense = +d.defense;
-                d.sp_attack = +d.sp_attack;
-                d.sp_defense = +d.sp_defense;
-                d.speed = +d.speed;
+                d.base_egg_steps = +d.base_egg_steps;
+                d.base_happiness = +d.base_happiness;
+                d.base_total = +d.base_total;
+                d.percentage_male = +d.percentage_male;
+                d.experience_growth = +d.experience_growth;
             });
 
             x.domain(d3.extent(data, d => d.id));
-            y.domain(d3.extent(data, d => d.attack));
+            y.domain(d3.extent(data, d => d.base_egg_steps));
 
             svg.append("g")
                 .attr("class", "x axis")

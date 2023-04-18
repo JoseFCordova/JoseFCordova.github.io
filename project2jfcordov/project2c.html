@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Info</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+</head>
+<body>
+    <h1>Pokémon Info</h1>
+    <label for="pokemon-select">Choose a Pokémon:</label>
+    <select id="pokemon-select">
+        <option value="">--Select--</option>
+    </select>
+    <div id="pokemon-info"></div>
+    <script>
+        d3.csv("pokemon.csv").then(data => {
+            const select = d3.select("#pokemon-select");
+            select.selectAll("option")
+                .data(data)
+                .enter()
+                .append("option")
+                .attr("value", d => d.name)
+                .text(d => d.name);
+            select.on("change", function() {
+                const selected = this.value;
+                const pokemon = data.find(p => p.name === selected);
+                if (pokemon) {
+                    displayPokemonInfo(pokemon);
+                }
+            });
+        });
+
+        function displayPokemonInfo(pokemon) {
+            const info = d3.select("#pokemon-info");
+            info.html("");
+            const list = info.append("ul");
+            for (const key in pokemon) {
+                if (key === "name" || key === "pokedex_number") continue;
+                list.append("li").text(`${key}: ${pokemon[key]}`);
+            }
+            const paddedPokedexNumber = String(pokemon.pokedex_number).padStart(2, '0');
+            const imgPath = `./icons/${paddedPokedexNumber}.png`;
+            info.append("img").attr("src", imgPath).attr("alt", `${pokemon.name} image`);
+        }
+    </script>
+</body>
+</html>
